@@ -6,138 +6,203 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Karte">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0f0f13">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>Moje Članske Karte</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    input, select, button, textarea { -webkit-appearance: none; appearance: none; font-family: inherit; }
+    input, select, button { -webkit-appearance: none; appearance: none; font-family: inherit; }
     :root {
-      --bg:#0f0f13; --s1:#1c1c24; --s2:#26262f; --s3:#30303c; --border:#2e2e3d;
-      --accent:#6c63ff; --accent2:#a78bfa; --text:#f0f0f5; --sub:#8888a8; --red:#ff5c6a; --r:18px;
-      --safe-top:env(safe-area-inset-top,44px); --safe-bottom:env(safe-area-inset-bottom,34px);
-      --safe-left:env(safe-area-inset-left,0px); --safe-right:env(safe-area-inset-right,0px);
+      --bg: #0f0f13; --surface: #1c1c24; --surface2: #26262f; --border: #2e2e3d;
+      --accent: #6c63ff; --accent2: #a78bfa; --text: #f0f0f5; --subtext: #8888a8; --r: 18px;
+      --safe-top: env(safe-area-inset-top, 44px); --safe-bottom: env(safe-area-inset-bottom, 34px);
+      --safe-left: env(safe-area-inset-left, 0px); --safe-right: env(safe-area-inset-right, 0px);
     }
-    html { height:100%; }
-    body { background:var(--bg); color:var(--text); font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,sans-serif; min-height:100%; padding-bottom:calc(88px + var(--safe-bottom)); -webkit-overflow-scrolling:touch; overscroll-behavior-y:none; }
-    .header { background:rgba(15,15,19,0.92); padding:calc(var(--safe-top) + 14px) calc(var(--safe-right) + 20px) 0 calc(var(--safe-left) + 20px); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); }
-    .header-row { display:flex; align-items:center; justify-content:space-between; padding-bottom:14px; }
-    .header h1 { font-size:20px; font-weight:700; letter-spacing:-0.4px; }
-    .header-count { color:var(--sub); font-size:12px; font-weight:500; }
-    .search-wrap { padding-bottom:12px; position:relative; }
-    .search-input { width:100%; background:var(--s2); border:1.5px solid var(--border); color:var(--text); padding:11px 38px 11px 14px; border-radius:12px; font-size:15px; outline:none; transition:border-color 0.18s; }
-    .search-input:focus { border-color:var(--accent); }
-    .search-input::placeholder { color:var(--sub); }
-    .search-clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:var(--s3); border:none; color:var(--sub); width:22px; height:22px; border-radius:50%; font-size:11px; cursor:pointer; display:none; align-items:center; justify-content:center; }
-    .search-clear.visible { display:flex; }
-    #cards-container { padding:20px calc(var(--safe-right) + 16px) 0 calc(var(--safe-left) + 16px); display:flex; flex-direction:column; gap:14px; }
-    .empty-state { text-align:center; padding:80px 30px; color:var(--sub); }
-    .empty-icon { width:64px; height:64px; border-radius:18px; background:var(--s2); margin:0 auto 16px; display:flex; align-items:center; justify-content:center; }
-    .empty-icon svg { width:32px; height:32px; stroke:var(--sub); fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
-    .empty-title { font-size:16px; font-weight:600; color:var(--text); margin-bottom:6px; }
-    .empty-sub { font-size:14px; line-height:1.6; }
-    @keyframes slideIn { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-    .card-item { border-radius:var(--r); cursor:pointer; position:relative; overflow:hidden; transition:transform 0.12s ease; -webkit-user-select:none; user-select:none; animation:slideIn 0.38s cubic-bezier(0.22,1,0.36,1) both; }
-    .card-item:active { transform:scale(0.965); }
-    .card-img-wrap { width:100%; height:168px; overflow:hidden; border-radius:var(--r); position:relative; }
-    .card-img-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
-    .card-img-overlay { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.80)); padding:24px 16px 14px; border-radius:0 0 var(--r) var(--r); }
-    .card-img-name { font-size:16px; font-weight:700; color:#fff; }
-    .card-img-num { font-size:12px; color:rgba(255,255,255,0.70); letter-spacing:1.8px; margin-top:3px; font-family:'SF Mono',monospace; }
-    .card-solid { padding:20px; min-height:114px; display:flex; flex-direction:column; justify-content:space-between; }
-    .card-solid::after { content:''; position:absolute; top:-52px; right:-42px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,0.06); }
-    .card-row { display:flex; align-items:center; justify-content:space-between; }
-    .card-label { font-size:17px; font-weight:700; }
-    .card-ico { font-size:28px; line-height:1; }
-    .card-num { font-size:13px; letter-spacing:2.5px; opacity:0.78; font-family:'SF Mono',monospace; }
-    .card-badge { display:inline-flex; align-items:center; padding:3px 9px; border-radius:20px; background:rgba(255,255,255,0.13); font-size:10px; letter-spacing:0.8px; text-transform:uppercase; font-weight:600; margin-top:10px; align-self:flex-start; }
-    .del-btn { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.36); border:none; color:rgba(255,255,255,0.85); width:30px; height:30px; border-radius:50%; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
-    .no-results { text-align:center; padding:50px 20px; color:var(--sub); font-size:14px; }
-    .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(28,28,36,0.94); border-top:1px solid var(--border); padding:12px calc(var(--safe-right) + 20px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 20px); display:flex; justify-content:center; z-index:100; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); }
-    .add-btn { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; padding:15px 0; width:100%; max-width:360px; border-radius:14px; font-size:16px; font-weight:600; cursor:pointer; box-shadow:0 4px 24px rgba(108,99,255,0.42); }
-    .add-btn:active { transform:scale(0.97); }
-    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:200; align-items:flex-end; justify-content:center; }
-    .overlay.active { display:flex; }
-    .sheet { background:var(--s1); border-radius:26px 26px 0 0; padding:0 0 calc(var(--safe-bottom) + 16px); width:100%; max-width:480px; max-height:92svh; overflow-y:auto; -webkit-overflow-scrolling:touch; animation:sheetUp 0.32s cubic-bezier(0.32,0.72,0,1); }
-    @keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-    .sheet::-webkit-scrollbar { display:none; }
-    .sheet-head { position:sticky; top:0; background:var(--s1); padding:12px 20px 14px; z-index:10; border-bottom:1px solid var(--border); }
-    .handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 12px; }
-    .sheet-title { font-size:17px; font-weight:700; text-align:center; }
-    .body { padding:16px 20px 0; }
-    .fg { margin-bottom:15px; }
-    .fg label { display:block; font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:1px; font-weight:600; margin-bottom:7px; }
-    .fg input, .fg select { width:100%; background:var(--s2); border:1.5px solid var(--border); color:var(--text); padding:14px 16px; border-radius:13px; font-size:16px; outline:none; transition:border-color 0.18s; }
-    .fg input:focus, .fg select:focus { border-color:var(--accent); }
-    .fg select { padding-right:38px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; }
-    .fg select option { background:#1c1c24; }
-    .upload-zone { border:2px dashed var(--border); border-radius:14px; padding:22px 16px; text-align:center; cursor:pointer; position:relative; overflow:hidden; }
-    .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; }
-    .uz-icon { width:44px; height:44px; border-radius:12px; background:var(--s2); margin:0 auto 8px; display:flex; align-items:center; justify-content:center; }
-    .uz-icon svg { width:22px; height:22px; stroke:var(--sub); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-    .uz-text { font-size:14px; color:var(--sub); }
-    .uz-text b { color:var(--accent2); font-weight:600; }
-    #preview-wrap { display:none; position:relative; margin-bottom:8px; }
-    #preview-wrap img { width:100%; max-height:160px; object-fit:cover; border-radius:13px; display:block; }
-    .preview-del { position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.6); border:none; color:#fff; width:28px; height:28px; border-radius:50%; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .colours { display:flex; gap:10px; flex-wrap:wrap; }
-    .col-dot { width:38px; height:38px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:transform 0.15s; flex-shrink:0; }
-    .col-dot.sel { border-color:#fff; transform:scale(1.14); }
-    .icons { display:flex; gap:8px; flex-wrap:wrap; }
-    .ico-btn { width:44px; height:44px; border-radius:11px; background:var(--s2); border:2px solid transparent; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .ico-btn.sel { border-color:var(--accent); background:rgba(108,99,255,0.18); }
-    .btn-p { width:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; padding:15px; border-radius:14px; font-size:16px; font-weight:600; cursor:pointer; margin-top:10px; min-height:52px; }
-    .btn-s { width:100%; background:var(--s2); color:var(--sub); border:none; padding:14px; border-radius:14px; font-size:15px; cursor:pointer; margin-top:8px; min-height:50px; }
-    .btn-d { width:100%; background:rgba(255,92,106,0.12); color:var(--red); border:1.5px solid rgba(255,92,106,0.25); padding:14px; border-radius:14px; font-size:15px; font-weight:600; cursor:pointer; margin-top:8px; min-height:50px; }
-    .det-hero { border-radius:16px; padding:22px 20px; margin:0 20px 20px; position:relative; overflow:hidden; }
-    .det-hero::after { content:''; position:absolute; top:-55px; right:-45px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,0.07); }
-    .dh-ico { font-size:36px; float:right; margin-top:-2px; line-height:1; }
-    .dh-name { font-size:22px; font-weight:800; line-height:1.2; }
-    .dh-num { margin-top:8px; font-size:14px; letter-spacing:3px; opacity:0.80; font-family:'SF Mono',monospace; }
-    .tabs { display:flex; gap:8px; margin:0 20px 16px; }
-    .tab { flex:1; padding:11px 6px; border-radius:11px; border:none; background:var(--s2); color:var(--sub); font-size:12px; font-weight:600; cursor:pointer; min-height:44px; transition:background 0.18s,color 0.18s; }
-    .tab.active { background:var(--accent); color:#fff; }
-    .code-box { margin:0 20px; background:#fff; border-radius:14px; padding:18px; display:flex; align-items:center; justify-content:center; min-height:130px; }
-    .code-box svg, .code-box canvas { max-width:100%; }
-    #photo-view { display:none; margin:0 20px; }
-    #photo-view img { width:100%; border-radius:14px; display:block; box-shadow:0 10px 36px rgba(0,0,0,0.5); }
-    .scan-tip { text-align:center; color:var(--sub); font-size:12px; margin:10px 20px 0; line-height:1.5; }
-    .scan-tip b { color:var(--accent2); }
-    .del-sheet { background:var(--s1); border-radius:26px 26px 0 0; padding:28px 20px calc(var(--safe-bottom) + 20px); width:100%; max-width:480px; animation:sheetUp 0.3s cubic-bezier(0.32,0.72,0,1); }
-    .del-icon { width:56px; height:56px; border-radius:16px; background:rgba(255,92,106,0.12); margin:0 auto 16px; display:flex; align-items:center; justify-content:center; }
-    .del-icon svg { width:28px; height:28px; stroke:var(--red); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-    .del-title { font-size:18px; font-weight:700; text-align:center; margin-bottom:8px; }
-    .del-sub { text-align:center; color:var(--sub); font-size:14px; line-height:1.5; margin-bottom:24px; }
-    .del-sub b { color:var(--text); }
+    html { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100%; padding-bottom: calc(80px + var(--safe-bottom)); -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
+
+    /* HEADER */
+    .header { background: linear-gradient(160deg,#1a1a2e 0%,#0f0f13 100%); padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 20px) 20px calc(var(--safe-left) + 20px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; }
+    .header-logo { display: flex; align-items: center; gap: 10px; }
+    .header-logo svg { width: 28px; height: 28px; color: var(--accent2); }
+    .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .header-sub { color: var(--subtext); font-size: 12px; margin-top: 3px; font-weight: 500; }
+
+    /* CARDS */
+    #cards-container { padding: 20px calc(var(--safe-right) + 16px) 20px calc(var(--safe-left) + 16px); display: flex; flex-direction: column; gap: 14px; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 80px 30px; color: var(--subtext); }
+    .empty-state svg { width: 56px; height: 56px; margin-bottom: 16px; opacity: 0.4; }
+    .empty-state p { font-size: 15px; line-height: 1.6; font-weight: 500; }
+
+    /* CARD ITEM */
+    .card-item { border-radius: var(--r); cursor: pointer; position: relative; overflow: hidden; transition: transform 0.15s ease, box-shadow 0.15s ease; -webkit-user-select: none; user-select: none; animation: cardIn 0.3s ease both; }
+    @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .card-item:active { transform: scale(0.965); }
+
+    /* IMAGE CARD — blur on idle, clear on hover/focus */
+    .card-img-wrap { width: 100%; height: 170px; overflow: hidden; border-radius: var(--r); position: relative; }
+    .card-img-wrap img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      filter: blur(6px) brightness(0.85);
+      transform: scale(1.06);
+      transition: filter 0.35s ease, transform 0.35s ease;
+    }
+    .card-item:hover .card-img-wrap img,
+    .card-item:focus .card-img-wrap img,
+    .card-item.touched .card-img-wrap img {
+      filter: blur(0px) brightness(1);
+      transform: scale(1);
+    }
+    .card-img-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.82)); padding: 24px 16px 14px; border-radius: 0 0 var(--r) var(--r); }
+    .card-img-name { font-size: 17px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+    .card-img-number { font-size: 12px; color: rgba(255,255,255,0.72); letter-spacing: 1.8px; margin-top: 3px; font-family: 'SF Mono', 'Fira Mono', monospace; }
+
+    /* COLOR CARD (no image) */
+    .card-no-img { padding: 20px; min-height: 116px; display: flex; flex-direction: column; justify-content: space-between; }
+    .card-no-img::after { content: ''; position: absolute; top: -50px; right: -40px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.06); pointer-events: none; }
+    .card-row { display: flex; align-items: center; justify-content: space-between; }
+    .card-name-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+
+    .card-number-text { font-size: 13px; letter-spacing: 2.5px; opacity: 0.82; font-family: 'SF Mono', 'Fira Mono', monospace; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,0.14); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; font-weight: 700; margin-top: 10px; align-self: flex-start; }
+    .badge svg { width: 10px; height: 10px; }
+
+    /* DELETE BUTTON */
+    .del-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.4); border: none; color: rgba(255,255,255,0.9); width: 30px; height: 30px; border-radius: 50%; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: background 0.15s; }
+    .del-btn:hover { background: rgba(200,50,50,0.7); }
+    .del-btn svg { width: 12px; height: 12px; }
+
+    /* BOTTOM NAV */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28,28,36,0.92); border-top: 1px solid var(--border); padding: 12px calc(var(--safe-right) + 24px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 24px); display: flex; justify-content: center; z-index: 100; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    .add-btn { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #fff; border: none; padding: 15px 0; width: 100%; max-width: 360px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 24px rgba(108,99,255,0.45); display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: -0.2px; }
+    .add-btn svg { width: 18px; height: 18px; }
+    .add-btn:active { transform: scale(0.97); }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 200; align-items: flex-end; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .sheet { background: var(--surface); border-radius: 26px 26px 0 0; padding: 0 var(--safe-right) calc(var(--safe-bottom) + 16px) var(--safe-left); width: 100%; max-width: 480px; max-height: 92svh; overflow-y: auto; -webkit-overflow-scrolling: touch; animation: sheetUp 0.32s cubic-bezier(0.32,0.72,0,1); }
+    @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .sheet-head { position: sticky; top: 0; background: var(--surface); padding: 12px 20px 16px; z-index: 10; border-bottom: 1px solid var(--border); }
+    .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 14px; }
+    .sheet-title { font-size: 18px; font-weight: 700; text-align: center; letter-spacing: -0.3px; }
+    .sheet-body { padding: 16px 20px 0; }
+    .fg { margin-bottom: 16px; }
+    .fg label { display: block; font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 7px; }
+    .fg input, .fg select { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text); padding: 14px 16px; border-radius: 13px; font-size: 16px; outline: none; transition: border-color 0.18s; font-family: 'Inter', sans-serif; }
+    .fg input:focus, .fg select:focus { border-color: var(--accent); }
+    .fg select { padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239090a8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    .fg select option { background: #1c1c24; }
+
+    /* UPLOAD ZONE */
+    .upload-zone { border: 2px dashed var(--border); border-radius: 14px; padding: 24px 16px; text-align: center; cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.2s; }
+    .upload-zone:hover { border-color: var(--accent); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-zone-icon svg { width: 36px; height: 36px; color: var(--subtext); margin-bottom: 8px; }
+    .upload-zone-text { font-size: 14px; color: var(--subtext); line-height: 1.5; font-weight: 500; }
+    .upload-zone-text b { color: var(--accent2); font-weight: 600; }
+    #preview-wrap { display: none; position: relative; margin-bottom: 8px; }
+    #preview-wrap img { width: 100%; max-height: 170px; object-fit: cover; border-radius: 13px; display: block; }
+    .preview-del { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .preview-del svg { width: 12px; height: 12px; }
+
+    /* COLOR PICKER */
+    .colours { display: flex; gap: 10px; flex-wrap: wrap; }
+    .col-dot { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform 0.15s; flex-shrink: 0; }
+    .col-dot.sel { border-color: #fff; transform: scale(1.15); }
+
+
+
+    /* BUTTONS */
+    .btn-primary { width: 100%; background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #fff; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; min-height: 52px; letter-spacing: -0.2px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary svg { width: 18px; height: 18px; }
+    .btn-secondary { width: 100%; background: var(--surface2); color: var(--subtext); border: none; padding: 15px; border-radius: 14px; font-size: 15px; cursor: pointer; margin-top: 8px; min-height: 50px; font-weight: 500; }
+
+    /* DETAIL SHEET */
+    .detail-hero { border-radius: 16px; padding: 22px 20px; margin: 0 20px 20px; position: relative; overflow: hidden; }
+    .detail-hero::after { content: ''; position: absolute; top: -55px; right: -45px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.07); pointer-events: none; }
+
+    .dh-name { font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: -0.5px; }
+    .dh-num { margin-top: 8px; font-size: 14px; letter-spacing: 3px; opacity: 0.82; font-family: 'SF Mono', 'Fira Mono', monospace; }
+    .tabs { display: flex; gap: 8px; margin: 0 20px 16px; }
+    .tab { flex: 1; padding: 11px 6px; border-radius: 11px; border: none; background: var(--surface2); color: var(--subtext); font-size: 12px; font-weight: 600; cursor: pointer; min-height: 44px; transition: background 0.18s, color 0.18s; font-family: 'Inter', sans-serif; letter-spacing: 0.2px; }
+    .tab.active { background: var(--accent); color: #fff; }
+    .code-wrap { margin: 0 20px; background: #fff; border-radius: 14px; padding: 18px; display: flex; align-items: center; justify-content: center; min-height: 130px; }
+    .code-wrap svg, .code-wrap canvas { max-width: 100%; }
+    #photo-view { display: none; margin: 0 20px; }
+    #photo-view img { width: 100%; border-radius: 14px; display: block; box-shadow: 0 10px 36px rgba(0,0,0,0.55); }
+    .scan-tip { text-align: center; color: var(--subtext); font-size: 12px; margin: 10px 20px 0; line-height: 1.5; font-weight: 500; }
+    .scan-tip b { color: var(--accent2); }
+    .sheet::-webkit-scrollbar { display: none; }
+
+    /* CONFIRM MODAL */
+    .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+    .confirm-overlay.active { display: flex; }
+    .confirm-box { background: var(--surface); border-radius: 20px; padding: 28px 24px 20px; width: 100%; max-width: 320px; text-align: center; animation: fadeScale 0.2s ease; }
+    @keyframes fadeScale { from { opacity:0; transform: scale(0.92); } to { opacity:1; transform: scale(1); } }
+    .confirm-icon { margin-bottom: 14px; }
+    .confirm-icon svg { width: 44px; height: 44px; color: #f87171; }
+    .confirm-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
+    .confirm-msg { font-size: 14px; color: var(--subtext); line-height: 1.5; font-weight: 500; }
+    .confirm-btns { display: flex; gap: 10px; margin-top: 20px; }
+    .confirm-btns button { flex: 1; padding: 13px; border-radius: 12px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+    .confirm-cancel { background: var(--surface2); color: var(--subtext); }
+    .confirm-delete { background: #f87171; color: #fff; }
   </style>
 </head>
 <body>
 
 <header class="header">
-  <div class="header-row">
-    <h1>Moje Karte</h1>
-    <span class="header-count" id="card-count">0 karti</span>
-  </div>
-  <div class="search-wrap">
-    <input class="search-input" id="search" type="search" placeholder="Pretraži kartice..." oninput="onSearch(this)" autocomplete="off" spellcheck="false">
-    <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+  <div class="header-inner">
+    <div class="header-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="3"/>
+        <path d="M2 10h20"/>
+      </svg>
+      <div>
+        <h1>Moje Karte</h1>
+        <div class="header-sub" id="card-count">Nema sačuvanih karti</div>
+      </div>
+    </div>
   </div>
 </header>
 
-<main id="cards-container"></main>
+<main id="cards-container">
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="5" width="20" height="14" rx="3"/>
+      <path d="M2 10h20M7 15h2M13 15h4"/>
+    </svg>
+    <p>Još nemaš sačuvanih karti.<br>Klikni dugme ispod da dodaš prvu.</p>
+  </div>
+</main>
 
 <nav class="bottom-nav">
-  <button class="add-btn" onclick="openAdd()">Dodaj Kartu</button>
+  <button class="add-btn" onclick="openAdd()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+    Dodaj Kartu
+  </button>
 </nav>
 
 <!-- ADD SHEET -->
-<div class="overlay" id="add-ov" onclick="bgClose(event,'add-ov')">
+<div class="modal-overlay" id="add-overlay" onclick="bgClose(event,'add-overlay')">
   <div class="sheet">
-    <div class="sheet-head"><div class="handle"></div><div class="sheet-title">Nova Članska Karta</div></div>
-    <div class="body">
+    <div class="sheet-head">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Nova Članska Karta</div>
+    </div>
+    <div class="sheet-body">
       <div class="fg"><label>Naziv kartice</label><input type="text" id="f-name" placeholder="npr. Vulkan, Decathlon, Gym…" autocomplete="off" spellcheck="false"></div>
       <div class="fg"><label>Broj kartice</label><input type="text" id="f-num" placeholder="107173459" inputmode="numeric" autocomplete="off"></div>
       <div class="fg"><label>Tip koda</label>
@@ -149,14 +214,14 @@
       </div>
       <div class="fg">
         <label>Foto kartice (opciono)</label>
-        <div id="preview-wrap"><img id="preview-img" src="" alt=""><button class="preview-del" onclick="clearImg()">✕</button></div>
+        <div id="preview-wrap"><img id="preview-img" src="" alt=""><button class="preview-del" onclick="clearImg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
         <div class="upload-zone" id="upload-zone">
           <input type="file" id="f-img" accept="image/*" onchange="onImg(event)">
-          <div class="uz-icon"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
-          <div class="uz-text">Dodaj sliku kartice<br><b>Slikaj ili odaberi iz galerije</b></div>
+          <div class="upload-zone-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+          <div class="upload-zone-text">Dodaj sliku kartice<br><b>Slikaj ili odaberi iz Foto</b></div>
         </div>
       </div>
-      <div class="fg"><label>Boja</label>
+      <div class="fg"><label>Boja kartice</label>
         <div class="colours" id="colours">
           <div class="col-dot sel" style="background:linear-gradient(135deg,#6c63ff,#a78bfa)" data-c="linear-gradient(135deg,#6c63ff,#a78bfa)" onclick="pickCol(this)"></div>
           <div class="col-dot" style="background:linear-gradient(135deg,#e8420a,#f97316)" data-c="linear-gradient(135deg,#e8420a,#f97316)" onclick="pickCol(this)"></div>
@@ -168,143 +233,154 @@
           <div class="col-dot" style="background:linear-gradient(135deg,#1a1a2e,#16213e)" data-c="linear-gradient(135deg,#1a1a2e,#16213e)" onclick="pickCol(this)"></div>
         </div>
       </div>
-      <div class="fg"><label>Ikonica</label>
-        <div class="icons" id="icons">
-          <div class="ico-btn sel" data-i="🛒" onclick="pickIco(this)">🛒</div>
-          <div class="ico-btn" data-i="📚" onclick="pickIco(this)">📚</div>
-          <div class="ico-btn" data-i="🏋️" onclick="pickIco(this)">🏋️</div>
-          <div class="ico-btn" data-i="🏪" onclick="pickIco(this)">🏪</div>
-          <div class="ico-btn" data-i="⛽" onclick="pickIco(this)">⛽</div>
-          <div class="ico-btn" data-i="✈️" onclick="pickIco(this)">✈️</div>
-          <div class="ico-btn" data-i="🎬" onclick="pickIco(this)">🎬</div>
-          <div class="ico-btn" data-i="💊" onclick="pickIco(this)">💊</div>
-          <div class="ico-btn" data-i="🧴" onclick="pickIco(this)">🧴</div>
-          <div class="ico-btn" data-i="🍕" onclick="pickIco(this)">🍕</div>
-          <div class="ico-btn" data-i="🏔️" onclick="pickIco(this)">🏔️</div>
-          <div class="ico-btn" data-i="💳" onclick="pickIco(this)">💳</div>
-        </div>
-      </div>
-      <button class="btn-p" onclick="saveCard()">Sačuvaj kartu</button>
-      <button class="btn-s" onclick="close_('add-ov')">Otkaži</button>
+
+      <button class="btn-primary" onclick="saveCard()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+        Sačuvaj Kartu
+      </button>
+      <button class="btn-secondary" onclick="close_('add-overlay')">Otkaži</button>
     </div>
   </div>
 </div>
 
 <!-- DETAIL SHEET -->
-<div class="overlay" id="det-ov" onclick="bgClose(event,'det-ov')">
+<div class="modal-overlay" id="det-overlay" onclick="bgClose(event,'det-overlay')">
   <div class="sheet">
-    <div class="sheet-head"><div class="handle"></div></div>
-    <div class="det-hero" id="det-hero">
-      <span class="dh-ico" id="det-ico"></span>
+    <div class="sheet-head"><div class="sheet-handle"></div></div>
+    <div class="detail-hero" id="det-hero">
       <div class="dh-name" id="det-name"></div>
       <div class="dh-num"  id="det-num"></div>
     </div>
     <div class="tabs">
       <button class="tab active" id="t-bar" onclick="tab('bar')">Barkod</button>
-      <button class="tab"        id="t-qr"  onclick="tab('qr')">QR Kod</button>
-      <button class="tab"        id="t-img" onclick="tab('img')" style="display:none">Slika</button>
+      <button class="tab" id="t-qr" onclick="tab('qr')">QR Kod</button>
+      <button class="tab" id="t-img" onclick="tab('img')" style="display:none">Slika</button>
     </div>
-    <div class="code-box" id="code-box">
+    <div class="code-wrap" id="code-wrap">
       <svg id="bc-svg"></svg>
       <canvas id="qr-cv" style="display:none; border-radius:8px;"></canvas>
     </div>
     <div id="photo-view"><img id="photo-img" src="" alt="Slika kartice"></div>
-    <p class="scan-tip" id="scan-tip">Povećaj <b>osvijetljenost ekrana</b> na maksimum za lakše skeniranje</p>
-    <div style="padding:0 20px;"><button class="btn-s" onclick="close_('det-ov')">Zatvori</button></div>
+    <p class="scan-tip" id="scan-tip">Povećaj <b>osvijetljenost ekrana</b> na maksimum za skeniranje</p>
+    <div style="padding: 0 20px;"><button class="btn-secondary" onclick="close_('det-overlay')">Zatvori</button></div>
   </div>
 </div>
 
-<!-- DELETE CONFIRM SHEET -->
-<div class="overlay" id="del-ov" onclick="bgClose(event,'del-ov')">
-  <div class="del-sheet">
-    <div class="del-icon">
-      <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+<!-- CONFIRM DELETE MODAL -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+      </svg>
     </div>
-    <div class="del-title">Obrisati kartu?</div>
-    <div class="del-sub">Kartica <b id="del-card-name"></b> će biti trajno uklonjena.</div>
-    <button class="btn-d" onclick="confirmDel()">Obriši</button>
-    <button class="btn-s" onclick="close_('del-ov')">Otkaži</button>
+    <div class="confirm-title">Obriši kartu</div>
+    <div class="confirm-msg">Da li si siguran da želiš obrisati ovu kartu? Akcija se ne može poništiti.</div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="closeConfirm()">Otkaži</button>
+      <button class="confirm-delete" id="confirm-yes">Obriši</button>
+    </div>
   </div>
 </div>
 
 <script>
-let DB=JSON.parse(localStorage.getItem('karte')||'[]'),selC='linear-gradient(135deg,#6c63ff,#a78bfa)',selI='🛒',selB64=null,cur=null,delIdx=null,query='';
+let DB=JSON.parse(localStorage.getItem('karte')||'[]'),selC='linear-gradient(135deg,#6c63ff,#a78bfa)',selB64=null,cur=null,delIdx=null;
 const TC={'linear-gradient(135deg,#6c63ff,#a78bfa)':'#f0f0f5','linear-gradient(135deg,#e8420a,#f97316)':'#fff','linear-gradient(135deg,#f5576c,#f093fb)':'#fff','linear-gradient(135deg,#f7971e,#ffd200)':'#160a00','linear-gradient(135deg,#4facfe,#00f2fe)':'#05050f','linear-gradient(135deg,#43e97b,#38f9d7)':'#05100a','linear-gradient(135deg,#11998e,#38ef7d)':'#021208','linear-gradient(135deg,#1a1a2e,#16213e)':'#f0f0f5'};
+
 function save(){localStorage.setItem('karte',JSON.stringify(DB));}
 function fmt(n){return String(n).replace(/(.{4})/g,'$1 ').trim();}
-function updCount(){const n=DB.length;document.getElementById('card-count').textContent=n===0?'0 karti':n+(n===1?' karta':n<5?' karte':' karti');}
+function updCount(){const n=DB.length;document.getElementById('card-count').textContent=n===0?'Nema sačuvanih karti':n+(n===1?' karta':n<5?' karte':' karti')+' sačuvano';}
+
+// Kompresija slike: max 900px, kvalitet 0.75
+function compressImg(dataUrl, cb) {
+  const img = new Image();
+  img.onload = () => {
+    const MAX = 900;
+    let w = img.width, h = img.height;
+    if (w > MAX || h > MAX) {
+      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+      else       { w = Math.round(w * MAX / h); h = MAX; }
+    }
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(cv.toDataURL('image/jpeg', 0.75));
+  };
+  img.src = dataUrl;
+}
+
+// Touch blur reveal for mobile
+function addTouchBlur(el){
+  el.addEventListener('touchstart',()=>{el.classList.add('touched');},{ passive:true });
+  el.addEventListener('touchend',()=>{ setTimeout(()=>el.classList.remove('touched'),600); },{ passive:true });
+}
+
 function render(){
   const c=document.getElementById('cards-container');c.innerHTML='';
-  const q=query.toLowerCase();
-  const list=q?DB.filter(x=>x.name.toLowerCase().includes(q)):DB;
-  if(!DB.length){c.innerHTML='<div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="empty-title">Nema sačuvanih karti</div><div class="empty-sub">Klikni dugme ispod da dodaš prvu karticu.</div></div>';updCount();return;}
-  if(q&&!list.length){c.innerHTML=`<div class="no-results">Nema rezultata za "<b>${q}</b>"</div>`;updCount();return;}
-  list.forEach((card,vi)=>{
-    const i=DB.indexOf(card);const el=document.createElement('div');el.className='card-item';
-    el.style.animationDelay=(vi*55)+'ms';
-    if(card.img){el.innerHTML=`<button class="del-btn" onclick="askDel(event,${i})">✕</button><div class="card-img-wrap"><img src="${card.img}" alt="${card.name}" loading="lazy"><div class="card-img-overlay"><div class="card-img-name">${card.ico} ${card.name}</div><div class="card-img-num">${fmt(card.num)}</div></div></div>`;}
-    else{const tc=TC[card.color]||'#f0f0f5';el.style.background=card.color;el.style.color=tc;el.innerHTML=`<button class="del-btn" onclick="askDel(event,${i})">✕</button><div class="card-solid"><div class="card-row"><div class="card-label">${card.name}</div><div class="card-ico">${card.ico}</div></div><div class="card-num">${fmt(card.num)}</div><div class="card-badge">${card.type==='qr'?'QR Kod':'Barkod'}</div></div>`;}
-    el.onclick=e=>{if(!e.target.classList.contains('del-btn'))openDet(card);};c.appendChild(el);
+  if(!DB.length){
+    c.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M7 15h2M13 15h4"/></svg><p>Još nemaš sačuvanih karti.<br>Klikni dugme ispod da dodaš prvu.</p></div>`;
+    updCount();return;
+  }
+  DB.forEach((card,i)=>{
+    const el=document.createElement('div');el.className='card-item';
+    el.style.animationDelay=(i*0.06)+'s';
+    if(card.img){
+      el.innerHTML=`<button class="del-btn" onclick="askDel(event,${i})">&#x2715;</button><div class="card-img-wrap"><img src="${card.img}" alt="${card.name}" loading="lazy"><div class="card-img-overlay"><div class="card-img-name">${card.name}</div><div class="card-img-number">${fmt(card.num)}</div></div></div>`;
+      addTouchBlur(el);
+    } else {
+      const tc=TC[card.color]||'#f0f0f5';el.style.background=card.color;el.style.color=tc;
+      el.innerHTML=`<button class="del-btn" onclick="askDel(event,${i})">&#x2715;</button><div class="card-no-img"><div class="card-name-text">${card.name}</div><div class="card-number-text">${fmt(card.num)}</div><div class="badge">${card.type==='qr'?'QR Kod':'Barkod'}</div></div>`;
+    }
+    el.onclick=e=>{if(!e.target.closest('.del-btn'))openDet(card);};
+    c.appendChild(el);
   });updCount();
 }
-function onSearch(inp){query=inp.value;document.getElementById('search-clear').classList.toggle('visible',query.length>0);render();}
-function clearSearch(){document.getElementById('search').value='';query='';document.getElementById('search-clear').classList.remove('visible');render();}
+
 function openAdd(){
-  document.getElementById('add-ov').classList.add('active');
+  document.getElementById('add-overlay').classList.add('active');
   document.getElementById('f-name').value='';document.getElementById('f-num').value='';document.getElementById('f-type').value='CODE128';clearImg();
   document.querySelectorAll('.col-dot').forEach(d=>d.classList.remove('sel'));document.querySelector('.col-dot').classList.add('sel');selC=document.querySelector('.col-dot').dataset.c;
-  document.querySelectorAll('.ico-btn').forEach(d=>d.classList.remove('sel'));document.querySelector('.ico-btn').classList.add('sel');selI=document.querySelector('.ico-btn').dataset.i;
 }
 function close_(id){document.getElementById(id).classList.remove('active');}
 function bgClose(e,id){if(e.target===e.currentTarget)close_(id);}
 function pickCol(el){document.querySelectorAll('.col-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');selC=el.dataset.c;}
-function pickIco(el){document.querySelectorAll('.ico-btn').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');selI=el.dataset.i;}
-function compressImg(dataUrl,cb){
-  const img=new Image();
-  img.onload=()=>{
-    const c=document.createElement('canvas');
-    const MAX=800;let w=img.width,h=img.height;
-    if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
-    if(h>MAX&&h>w){w=Math.round(w*MAX/h);h=MAX;}
-    c.width=w;c.height=h;
-    c.getContext('2d').drawImage(img,0,0,w,h);
-    cb(c.toDataURL('image/jpeg',0.75));
-  };
-  img.src=dataUrl;
-}
-function onImg(e) {
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    compressImg(ev.target.result, compressed=>{
-      selB64=compressed;
-      document.getElementById('preview-img').src=compressed;
-      document.getElementById('preview-wrap').style.display='block';
-      document.getElementById('upload-zone').style.display='none';
-    });
-  };
-  r.readAsDataURL(f);
-}
+function onImg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{compressImg(ev.target.result,compressed=>{selB64=compressed;document.getElementById('preview-img').src=compressed;document.getElementById('preview-wrap').style.display='block';document.getElementById('upload-zone').style.display='none';});};r.readAsDataURL(f);}
 function clearImg(){selB64=null;document.getElementById('preview-img').src='';document.getElementById('preview-wrap').style.display='none';document.getElementById('upload-zone').style.display='block';const inp=document.getElementById('f-img');if(inp)inp.value='';}
-function saveCard(){const name=document.getElementById('f-name').value.trim(),num=document.getElementById('f-num').value.trim().replace(/\s/g,''),type=document.getElementById('f-type').value;if(!name){alert('Upiši naziv kartice!');return;}if(!num){alert('Upiši broj kartice!');return;}DB.push({name,num,type,color:selC,ico:selI,img:selB64||null});save();render();close_('add-ov');}
-function askDel(e,i){e.stopPropagation();delIdx=i;document.getElementById('del-card-name').textContent=DB[i].name;document.getElementById('del-ov').classList.add('active');}
-function confirmDel(){if(delIdx===null)return;DB.splice(delIdx,1);save();render();close_('del-ov');delIdx=null;}
+function saveCard(){
+  const name=document.getElementById('f-name').value.trim(),num=document.getElementById('f-num').value.trim().replace(/\s/g,''),type=document.getElementById('f-type').value;
+  if(!name){alert('Upiši naziv kartice!');return;}if(!num){alert('Upiši broj kartice!');return;}
+  DB.push({name,num,type,color:selC,img:selB64||null});save();render();close_('add-overlay');
+}
+
+// Nice confirm dialog instead of browser confirm()
+function askDel(e,i){
+  e.stopPropagation();
+  delIdx=i;
+  document.getElementById('confirm-overlay').classList.add('active');
+  document.getElementById('confirm-yes').onclick=()=>{
+    DB.splice(delIdx,1);save();render();closeConfirm();
+  };
+}
+function closeConfirm(){document.getElementById('confirm-overlay').classList.remove('active');delIdx=null;}
+document.getElementById('confirm-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConfirm();});
+
 function openDet(card){
-  cur=card;const tc=TC[card.color]||'#f0f0f5';const hero=document.getElementById('det-hero');
-  hero.style.background=card.color;hero.style.color=tc;
-  document.getElementById('det-ico').textContent=card.ico;document.getElementById('det-name').textContent=card.name;document.getElementById('det-num').textContent=fmt(card.num);
-  document.getElementById('t-img').style.display=card.img?'block':'none';
-  document.getElementById('det-ov').classList.add('active');
+  cur=card;const tc=TC[card.color]||'#f0f0f5';
+  const hero=document.getElementById('det-hero');hero.style.background=card.color;hero.style.color=tc;
+  document.getElementById('det-name').textContent=card.name;document.getElementById('det-num').textContent=fmt(card.num);
+  document.getElementById('t-img').style.display=card.img?'flex':'none';
+  document.getElementById('det-overlay').classList.add('active');
   tab(card.img?'img':(card.type==='qr'?'qr':'bar'));
 }
 function tab(t){
-  ['bar','qr','img'].forEach(x=>document.getElementById('t-'+x).classList.remove('active'));document.getElementById('t-'+t).classList.add('active');
-  const cb=document.getElementById('code-box'),pv=document.getElementById('photo-view'),tip=document.getElementById('scan-tip');
-  const bc=document.getElementById('bc-svg'),qc=document.getElementById('qr-cv');
-  if(t==='img'){cb.style.display='none';pv.style.display='block';tip.style.display='none';document.getElementById('photo-img').src=cur.img||'';}
-  else{cb.style.display='flex';pv.style.display='none';tip.style.display='block';bc.style.display=t==='bar'?'block':'none';qc.style.display=t==='qr'?'block':'none';
+  ['bar','qr','img'].forEach(x=>document.getElementById('t-'+x).classList.remove('active'));
+  document.getElementById('t-'+t).classList.add('active');
+  const cw=document.getElementById('code-wrap'),pv=document.getElementById('photo-view'),tip=document.getElementById('scan-tip');
+  const bcSvg=document.getElementById('bc-svg'),qrCv=document.getElementById('qr-cv');
+  if(t==='img'){cw.style.display='none';pv.style.display='block';tip.style.display='none';document.getElementById('photo-img').src=cur.img||'';}
+  else{cw.style.display='flex';pv.style.display='none';tip.style.display='block';bcSvg.style.display=t==='bar'?'block':'none';qrCv.style.display=t==='qr'?'block':'none';
     if(t==='bar'){try{JsBarcode('#bc-svg',cur.num,{format:cur.type==='qr'?'CODE128':cur.type,width:2.2,height:90,displayValue:true,fontSize:14,margin:12,background:'#fff',lineColor:'#000'});}catch(_){JsBarcode('#bc-svg',cur.num,{format:'CODE128',width:2.2,height:90,displayValue:true,fontSize:14,margin:12,background:'#fff',lineColor:'#000'});}}
-    else{QRCode.toCanvas(qc,cur.num,{width:220,margin:2,color:{dark:'#000',light:'#fff'}});}}
+    else{QRCode.toCanvas(qrCv,cur.num,{width:220,margin:2,color:{dark:'#000',light:'#fff'}});}}
 }
 if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 render();
