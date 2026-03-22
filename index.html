@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Karte">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f0f13">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Moje Članske Karte</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    input, select, button { -webkit-appearance: none; appearance: none; font-family: inherit; }
+    :root {
+      --bg: #0f0f13; --surface: #1c1c24; --surface2: #26262f; --border: #2e2e3d;
+      --accent: #6c63ff; --accent2: #a78bfa; --text: #f0f0f5; --subtext: #8888a8; --r: 18px;
+      --safe-top: env(safe-area-inset-top, 44px); --safe-bottom: env(safe-area-inset-bottom, 34px);
+      --safe-left: env(safe-area-inset-left, 0px); --safe-right: env(safe-area-inset-right, 0px);
+    }
+    html { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, 'SF Pro Display', BlinkMacSystemFont, sans-serif; min-height: 100%; padding-bottom: calc(80px + var(--safe-bottom)); -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
+    .header { background: linear-gradient(160deg,#1a1a2e 0%,#0f0f13 100%); padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 20px) 20px calc(var(--safe-left) + 20px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .header-sub { color: var(--subtext); font-size: 12px; margin-top: 3px; }
+    #cards-container { padding: 20px calc(var(--safe-right) + 16px) 20px calc(var(--safe-left) + 16px); display: flex; flex-direction: column; gap: 14px; }
+    .empty-state { text-align: center; padding: 80px 30px; color: var(--subtext); }
+    .empty-state .eicon { font-size: 60px; margin-bottom: 14px; line-height: 1; }
+    .empty-state p { font-size: 15px; line-height: 1.6; }
+    .card-item { border-radius: var(--r); cursor: pointer; position: relative; overflow: hidden; transition: transform 0.12s ease; -webkit-user-select: none; user-select: none; }
+    .card-item:active { transform: scale(0.965); }
+    .card-img-wrap { width: 100%; height: 170px; overflow: hidden; border-radius: var(--r); position: relative; }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-img-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.78)); padding: 20px 16px 14px; border-radius: 0 0 var(--r) var(--r); }
+    .card-img-name { font-size: 17px; font-weight: 700; color: #fff; }
+    .card-img-number { font-size: 12px; color: rgba(255,255,255,0.72); letter-spacing: 1.8px; margin-top: 3px; font-family: 'SF Mono', monospace; }
+    .card-no-img { padding: 20px; min-height: 116px; display: flex; flex-direction: column; justify-content: space-between; }
+    .card-no-img::after { content: ''; position: absolute; top: -50px; right: -40px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+    .card-row { display: flex; align-items: center; justify-content: space-between; }
+    .card-name-text { font-size: 17px; font-weight: 700; }
+    .card-icon { font-size: 30px; }
+    .card-number-text { font-size: 13px; letter-spacing: 2.5px; opacity: 0.8; font-family: 'SF Mono', monospace; }
+    .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; background: rgba(255,255,255,0.14); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; font-weight: 600; margin-top: 10px; align-self: flex-start; }
+    .del-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.36); border: none; color: rgba(255,255,255,0.85); width: 30px; height: 30px; border-radius: 50%; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28,28,36,0.92); border-top: 1px solid var(--border); padding: 12px calc(var(--safe-right) + 24px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 24px); display: flex; justify-content: center; z-index: 100; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    .add-btn { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #fff; border: none; padding: 15px 0; width: 100%; max-width: 360px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 24px rgba(108,99,255,0.45); }
+    .add-btn:active { transform: scale(0.97); }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 200; align-items: flex-end; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .sheet { background: var(--surface); border-radius: 26px 26px 0 0; padding: 0 var(--safe-right) calc(var(--safe-bottom) + 16px) var(--safe-left); width: 100%; max-width: 480px; max-height: 92svh; overflow-y: auto; -webkit-overflow-scrolling: touch; animation: sheetUp 0.32s cubic-bezier(0.32,0.72,0,1); }
+    @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .sheet-head { position: sticky; top: 0; background: var(--surface); padding: 12px 20px 16px; z-index: 10; border-bottom: 1px solid var(--border); }
+    .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 14px; }
+    .sheet-title { font-size: 18px; font-weight: 700; text-align: center; }
+    .sheet-body { padding: 16px 20px 0; }
+    .fg { margin-bottom: 16px; }
+    .fg label { display: block; font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 7px; }
+    .fg input, .fg select { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text); padding: 14px 16px; border-radius: 13px; font-size: 16px; outline: none; transition: border-color 0.18s; }
+    .fg input:focus, .fg select:focus { border-color: var(--accent); }
+    .fg select { padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239090a8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    .fg select option { background: #1c1c24; }
+    .upload-zone { border: 2px dashed var(--border); border-radius: 14px; padding: 24px 16px; text-align: center; cursor: pointer; position: relative; overflow: hidden; }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-zone-icon { font-size: 34px; margin-bottom: 6px; }
+    .upload-zone-text { font-size: 14px; color: var(--subtext); line-height: 1.5; }
+    .upload-zone-text b { color: var(--accent2); font-weight: 600; }
+    #preview-wrap { display: none; position: relative; margin-bottom: 8px; }
+    #preview-wrap img { width: 100%; max-height: 170px; object-fit: cover; border-radius: 13px; display: block; }
+    .preview-del { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .colours { display: flex; gap: 10px; flex-wrap: wrap; }
+    .col-dot { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform 0.15s; flex-shrink: 0; }
+    .col-dot.sel { border-color: #fff; transform: scale(1.15); }
+    .icons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ico-btn { width: 44px; height: 44px; border-radius: 11px; background: var(--surface2); border: 2px solid transparent; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .ico-btn.sel { border-color: var(--accent); background: rgba(108,99,255,0.18); }
+    .btn-primary { width: 100%; background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #fff; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; min-height: 52px; }
+    .btn-secondary { width: 100%; background: var(--surface2); color: var(--subtext); border: none; padding: 15px; border-radius: 14px; font-size: 15px; cursor: pointer; margin-top: 8px; min-height: 50px; }
+    .detail-hero { border-radius: 16px; padding: 22px 20px; margin: 0 20px 20px; position: relative; overflow: hidden; }
+    .detail-hero::after { content: ''; position: absolute; top: -55px; right: -45px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.07); }
+    .dh-icon { font-size: 38px; float: right; margin-top: -4px; }
+    .dh-name { font-size: 22px; font-weight: 800; line-height: 1.2; }
+    .dh-num { margin-top: 8px; font-size: 14px; letter-spacing: 3px; opacity: 0.82; font-family: 'SF Mono', monospace; }
+    .tabs { display: flex; gap: 8px; margin: 0 20px 16px; }
+    .tab { flex: 1; padding: 11px 6px; border-radius: 11px; border: none; background: var(--surface2); color: var(--subtext); font-size: 12px; font-weight: 600; cursor: pointer; min-height: 44px; transition: background 0.18s, color 0.18s; }
+    .tab.active { background: var(--accent); color: #fff; }
+    .code-wrap { margin: 0 20px; background: #fff; border-radius: 14px; padding: 18px; display: flex; align-items: center; justify-content: center; min-height: 130px; }
+    .code-wrap svg, .code-wrap canvas { max-width: 100%; }
+    #photo-view { display: none; margin: 0 20px; }
+    #photo-view img { width: 100%; border-radius: 14px; display: block; box-shadow: 0 10px 36px rgba(0,0,0,0.55); }
+    .scan-tip { text-align: center; color: var(--subtext); font-size: 12px; margin: 10px 20px 0; line-height: 1.5; }
+    .scan-tip b { color: var(--accent2); }
+    .sheet::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div>
+      <h1>💳 Moje Karte</h1>
+      <div class="header-sub" id="card-count">Nema sačuvanih karti</div>
+    </div>
+  </div>
+</header>
+
+<main id="cards-container">
+  <div class="empty-state">
+    <div class="eicon">🗂️</div>
+    <p>Još nemaš sačuvanih karti.<br>Klikni dugme ispod da dodaš prvu.</p>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <button class="add-btn" onclick="openAdd()">＋ Dodaj Kartu</button>
+</nav>
+
+<!-- ADD SHEET -->
+<div class="modal-overlay" id="add-overlay" onclick="bgClose(event,'add-overlay')">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Nova Članska Karta</div>
+    </div>
+    <div class="sheet-body">
+      <div class="fg"><label>Naziv kartice</label><input type="text" id="f-name" placeholder="npr. Vulkan, Decathlon, Gym…" autocomplete="off" spellcheck="false"></div>
+      <div class="fg"><label>Broj kartice</label><input type="text" id="f-num" placeholder="107173459" inputmode="numeric" autocomplete="off"></div>
+      <div class="fg"><label>Tip koda</label>
+        <select id="f-type">
+          <option value="CODE128">Barkod — CODE128 (najčešći)</option>
+          <option value="EAN13">Barkod — EAN-13</option>
+          <option value="qr">QR Kod</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>📷 Foto kartice (opciono)</label>
+        <div id="preview-wrap"><img id="preview-img" src="" alt=""><button class="preview-del" onclick="clearImg()">✕</button></div>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="f-img" accept="image/*" onchange="onImg(event)">
+          <div class="upload-zone-icon">📷</div>
+          <div class="upload-zone-text">Dodaj sliku kartice<br><b>Slikaj ili odaberi iz Foto</b></div>
+        </div>
+      </div>
+      <div class="fg"><label>Boja kartice</label>
+        <div class="colours" id="colours">
+          <div class="col-dot sel" style="background:linear-gradient(135deg,#6c63ff,#a78bfa)" data-c="linear-gradient(135deg,#6c63ff,#a78bfa)" onclick="pickCol(this)"></div>
+          <div class="col-dot" style="background:linear-gradient(135deg,#e8420a,#f97316)" data-c="linear-gradient(135deg,#e8420a,#f97316)" onclick="pickCol(this)"></div>
+          <div class="col-dot" style="background:linear-gradient(135deg,#f5576c,#f093fb)" data-c="linear-gradient(135deg,#f5576c,#f093fb)" onclick="pickCol(this)"></div>
+          <div class="col-dot" style="background:linear-gradient(135deg,#f7971e,#ffd200)" data-c="linear-gradient(135deg,#f7971e,#ffd200)" onclick="pickCol(this)"></div>
+          <div class="col-dot" style="background:linear-gradient(135deg,#4facfe,#00f2fe)" data-c="linear-gradient(135deg,#4facfe,#00f2fe)" onclick="pickCol(this)"></div>
+          <div class="col-dot" style="background:linear-gradient(135deg,#43e97b,#38f9d7)" data-c="linear-gradient(135deg,#43e97b,#38f9d7)" onclick="pickCol(this)"></div>
+          <div class="col-dot" style="background:linear-gradient(135deg,#11998e,#38ef7d)" data-c="linear-gradient(135deg,#11998e,#38ef7d)" onclick="pickCol(this)"></div>
+          <div class="col-dot" style="background:linear-gradient(135deg,#1a1a2e,#16213e)" data-c="linear-gradient(135deg,#1a1a2e,#16213e)" onclick="pickCol(this)"></div>
+        </div>
+      </div>
+      <div class="fg"><label>Ikonica</label>
+        <div class="icons" id="icons">
+          <div class="ico-btn sel" data-i="🛒" onclick="pickIco(this)">🛒</div>
+          <div class="ico-btn" data-i="📚" onclick="pickIco(this)">📚</div>
+          <div class="ico-btn" data-i="🏋️" onclick="pickIco(this)">🏋️</div>
+          <div class="ico-btn" data-i="🏪" onclick="pickIco(this)">🏪</div>
+          <div class="ico-btn" data-i="⛽" onclick="pickIco(this)">⛽</div>
+          <div class="ico-btn" data-i="✈️" onclick="pickIco(this)">✈️</div>
+          <div class="ico-btn" data-i="🎬" onclick="pickIco(this)">🎬</div>
+          <div class="ico-btn" data-i="💊" onclick="pickIco(this)">💊</div>
+          <div class="ico-btn" data-i="🧴" onclick="pickIco(this)">🧴</div>
+          <div class="ico-btn" data-i="🍕" onclick="pickIco(this)">🍕</div>
+          <div class="ico-btn" data-i="🏔️" onclick="pickIco(this)">🏔️</div>
+          <div class="ico-btn" data-i="💳" onclick="pickIco(this)">💳</div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="saveCard()">💾 Sačuvaj Kartu</button>
+      <button class="btn-secondary" onclick="close_('add-overlay')">Otkaži</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL SHEET -->
+<div class="modal-overlay" id="det-overlay" onclick="bgClose(event,'det-overlay')">
+  <div class="sheet">
+    <div class="sheet-head"><div class="sheet-handle"></div></div>
+    <div class="detail-hero" id="det-hero">
+      <span class="dh-icon" id="det-icon"></span>
+      <div class="dh-name" id="det-name"></div>
+      <div class="dh-num"  id="det-num"></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="t-bar" onclick="tab('bar')">📊 Barkod</button>
+      <button class="tab"        id="t-qr"  onclick="tab('qr')">⬛ QR Kod</button>
+      <button class="tab"        id="t-img" onclick="tab('img')" style="display:none">🖼️ Slika</button>
+    </div>
+    <div class="code-wrap" id="code-wrap">
+      <svg id="bc-svg"></svg>
+      <canvas id="qr-cv" style="display:none; border-radius:8px;"></canvas>
+    </div>
+    <div id="photo-view"><img id="photo-img" src="" alt="Slika kartice"></div>
+    <p class="scan-tip" id="scan-tip">💡 Povećaj <b>osvijetljenost ekrana</b> na maksimum</p>
+    <div style="padding: 0 20px;"><button class="btn-secondary" onclick="close_('det-overlay')">Zatvori</button></div>
+  </div>
+</div>
+
+<script>
+let DB=JSON.parse(localStorage.getItem('karte')||'[]'),selC='linear-gradient(135deg,#6c63ff,#a78bfa)',selI='🛒',selB64=null,cur=null;
+const TC={'linear-gradient(135deg,#6c63ff,#a78bfa)':'#f0f0f5','linear-gradient(135deg,#e8420a,#f97316)':'#fff','linear-gradient(135deg,#f5576c,#f093fb)':'#fff','linear-gradient(135deg,#f7971e,#ffd200)':'#160a00','linear-gradient(135deg,#4facfe,#00f2fe)':'#05050f','linear-gradient(135deg,#43e97b,#38f9d7)':'#05100a','linear-gradient(135deg,#11998e,#38ef7d)':'#021208','linear-gradient(135deg,#1a1a2e,#16213e)':'#f0f0f5'};
+function save(){localStorage.setItem('karte',JSON.stringify(DB));}
+function fmt(n){return String(n).replace(/(.{4})/g,'$1 ').trim();}
+function updCount(){const n=DB.length;document.getElementById('card-count').textContent=n===0?'Nema sačuvanih karti':n+(n===1?' karta':n<5?' karte':' karti')+' sačuvano';}
+function render(){
+  const c=document.getElementById('cards-container');c.innerHTML='';
+  if(!DB.length){c.innerHTML='<div class="empty-state"><div class="eicon">🗂️</div><p>Još nemaš sačuvanih karti.<br>Klikni dugme ispod da dodaš prvu.</p></div>';updCount();return;}
+  DB.forEach((card,i)=>{
+    const el=document.createElement('div');el.className='card-item';
+    if(card.img){el.innerHTML=`<button class="del-btn" onclick="del(event,${i})">✕</button><div class="card-img-wrap"><img src="${card.img}" alt="${card.name}" loading="lazy"><div class="card-img-overlay"><div class="card-img-name">${card.icon} ${card.name}</div><div class="card-img-number">${fmt(card.num)}</div></div></div>`;}
+    else{const tc=TC[card.color]||'#f0f0f5';el.style.background=card.color;el.style.color=tc;el.innerHTML=`<button class="del-btn" onclick="del(event,${i})">✕</button><div class="card-no-img"><div class="card-row"><div class="card-name-text">${card.name}</div><div class="card-icon">${card.icon}</div></div><div class="card-number-text">${fmt(card.num)}</div><div class="badge">${card.type==='qr'?'QR Kod':'Barkod'}</div></div>`;}
+    el.onclick=e=>{if(!e.target.classList.contains('del-btn'))openDet(card);};
+    c.appendChild(el);
+  });updCount();
+}
+function openAdd(){
+  document.getElementById('add-overlay').classList.add('active');
+  document.getElementById('f-name').value='';document.getElementById('f-num').value='';document.getElementById('f-type').value='CODE128';clearImg();
+  document.querySelectorAll('.col-dot').forEach(d=>d.classList.remove('sel'));document.querySelector('.col-dot').classList.add('sel');selC=document.querySelector('.col-dot').dataset.c;
+  document.querySelectorAll('.ico-btn').forEach(d=>d.classList.remove('sel'));document.querySelector('.ico-btn').classList.add('sel');selI=document.querySelector('.ico-btn').dataset.i;
+}
+function close_(id){document.getElementById(id).classList.remove('active');}
+function bgClose(e,id){if(e.target===e.currentTarget)close_(id);}
+function pickCol(el){document.querySelectorAll('.col-dot').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');selC=el.dataset.c;}
+function pickIco(el){document.querySelectorAll('.ico-btn').forEach(d=>d.classList.remove('sel'));el.classList.add('sel');selI=el.dataset.i;}
+function onImg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{selB64=ev.target.result;document.getElementById('preview-img').src=selB64;document.getElementById('preview-wrap').style.display='block';document.getElementById('upload-zone').style.display='none';};r.readAsDataURL(f);}
+function clearImg(){selB64=null;document.getElementById('preview-img').src='';document.getElementById('preview-wrap').style.display='none';document.getElementById('upload-zone').style.display='block';const inp=document.getElementById('f-img');if(inp)inp.value='';}
+function saveCard(){const name=document.getElementById('f-name').value.trim(),num=document.getElementById('f-num').value.trim().replace(/\s/g,''),type=document.getElementById('f-type').value;if(!name){alert('Upiši naziv kartice!');return;}if(!num){alert('Upiši broj kartice!');return;}DB.push({name,num,type,color:selC,icon:selI,img:selB64||null});save();render();close_('add-overlay');}
+function del(e,i){e.stopPropagation();if(confirm('Obrisati ovu kartu?')){DB.splice(i,1);save();render();}}
+function openDet(card){
+  cur=card;const tc=TC[card.color]||'#f0f0f5';
+  const hero=document.getElementById('det-hero');hero.style.background=card.color;hero.style.color=tc;
+  document.getElementById('det-icon').textContent=card.icon;document.getElementById('det-name').textContent=card.name;document.getElementById('det-num').textContent=fmt(card.num);
+  document.getElementById('t-img').style.display=card.img?'block':'none';
+  document.getElementById('det-overlay').classList.add('active');
+  tab(card.img?'img':(card.type==='qr'?'qr':'bar'));
+}
+function tab(t){
+  ['bar','qr','img'].forEach(x=>document.getElementById('t-'+x).classList.remove('active'));
+  document.getElementById('t-'+t).classList.add('active');
+  const cw=document.getElementById('code-wrap'),pv=document.getElementById('photo-view'),tip=document.getElementById('scan-tip');
+  const bcSvg=document.getElementById('bc-svg'),qrCv=document.getElementById('qr-cv');
+  if(t==='img'){cw.style.display='none';pv.style.display='block';tip.style.display='none';document.getElementById('photo-img').src=cur.img||'';}
+  else{cw.style.display='flex';pv.style.display='none';tip.style.display='block';bcSvg.style.display=t==='bar'?'block':'none';qrCv.style.display=t==='qr'?'block':'none';
+    if(t==='bar'){try{JsBarcode('#bc-svg',cur.num,{format:cur.type==='qr'?'CODE128':cur.type,width:2.2,height:90,displayValue:true,fontSize:14,margin:12,background:'#fff',lineColor:'#000'});}catch(_){JsBarcode('#bc-svg',cur.num,{format:'CODE128',width:2.2,height:90,displayValue:true,fontSize:14,margin:12,background:'#fff',lineColor:'#000'});}}
+    else{QRCode.toCanvas(qrCv,cur.num,{width:220,margin:2,color:{dark:'#000',light:'#fff'}});}}
+}
+if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+render();
+</script>
+</body>
+</html>
